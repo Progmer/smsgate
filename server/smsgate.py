@@ -139,7 +139,7 @@ class SmsGate:
         if not self.config.getboolean("db", "enabled", fallback=True):
             return
 
-        self.db = db.DBDelivery(dsn=self.config.get("db", "dsn"))
+        self.db_delivery = db.DBDelivery(dsn=self.config.get("db", "dsn"))
 
     def _init_pool(self) -> bool:
         """
@@ -237,8 +237,7 @@ class SmsGate:
                         assert self.db_delivery.thread is not None
                         assert self.db_delivery.thread.is_alive()
                         self.l.debug(f"[{sms.get_id()}] Put SMS into outgoing DB queue.")
-                        self.db.queue.put(sms)
-
+                        self.db_delivery.queue.put(sms)
 
                 else:
                     self.l.info("No incoming SMS")
