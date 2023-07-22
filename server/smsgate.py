@@ -58,6 +58,9 @@ import db
 
 
 class SmsGate:
+    smtp_delivery: smtp.SMTPDelivery
+    db_delivery: db.DBDelivery
+
     """
     Class representing the SMS Gateway
     """
@@ -69,7 +72,6 @@ class SmsGate:
         """
 
         self.config = config
-        self.smtp_delivery_queue = queue.Queue()
         self.event_available = threading.Event()
 
         self.l = logging.getLogger("SmsGate")
@@ -130,65 +132,14 @@ class SmsGate:
             self.config.get("mail", "user"),
             self.config.get("mail", "password"),
             self.config.getint("mail", "health_check_interval", fallback=600),
+            self.config.get("mail", "recipient"),
         )
-
-        self.smtp_delivery_thread = threading.Thread(target=self._do_smtp_delivery)
-        self.smtp_delivery_thread.start()
 
     def _init_db_delivery(self):
         if not self.config.getboolean("db", "enabled", fallback=True):
             return
 
         self.db = db.DBDelivery(dsn=self.config.get("db", "dsn"))
-
-    def _do_smtp_delivery(self):
-        """
-        Internal method that checks the delivery queue for outgoing SMS that should be sent via SMTP.
-        """
-
-        while True:
-            try:
-                self.l.debug("Check delivery queue if E-mail should be sent.")
-                _sms = self.smtp_delivery_queue.get(timeout=10)
-                self.l.info(f"[{_sms.get_id()}] Event in SMS-to-Mail delivery queue.")
-                if _sms:
-                    self.l.info(f"[{_sms.get_id()}] Try to deliver SMS via E-mail.")
-
-                    # Check if the modem config has a specific recipient
-                    recipient = _sms.get_receiving_modem().get_modem_config().email_address
-                    if recipient is None:
-                        self.l.debug("Failed to look up recipient's e-mail address in modem config.")
-                        # Otherwise read recipient from main configuration
-                        recipient = self.config.get("mail", "recipient")
-
-                    self.l.debug(f"Will send e-mail to {recipient}.")
-
-                    if self.smtp_delivery.send_mail(recipient, _sms):
-                        self.l.info(f"[{_sms.get_id()}] E-mail was accepted by SMTP server.")
-                    else:
-                        self.l.info(f"[{_sms.get_id()}] There was an error delivering the SMS. Put SMS back into "
-                                    "queue and wait.")
-                        self.smtp_delivery_queue.put(_sms)
-
-                        # Update health data: The loop "prefers" delivering mails and deferrs the
-                        # health check until there is nothing to do. This is okay, because when
-                        # mails are delivered, everything seems to be okay. When there is an
-                        # issue and we have to wait anyway, we can perform a health check to let
-                        # the monitoring sooner or later know.
-                        self.smtp_delivery.do_health_check()
-                        time.sleep(30)
-
-            except queue.Empty:
-                self.l.debug(
-                    "_do_smtp_delivery(): No SMS in queue. Checking if health check should be run."
-                )
-                self.smtp_delivery.do_health_check()
-            except Exception as e:
-                self.l.warning("Got exception.")
-                print(e)
-            except:
-                self.l.warning("_do_smtp_delivery(): Unknown exception.")
-                traceback.print_exc()
 
     def _init_pool(self) -> bool:
         """
@@ -281,7 +232,7 @@ class SmsGate:
 
                     if self.config.getboolean("mail", "enabled", fallback=True):
                         self.l.debug(f"[{sms.get_id()}] Put SMS into outgoing queue.")
-                        self.smtp_delivery_queue.put(sms)
+                        self.smtp_delivery.queue.put(sms)
 
                 else:
                     self.l.info("No incoming SMS")

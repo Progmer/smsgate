@@ -39,7 +39,11 @@
 import datetime
 import logging
 import smtplib
+import queue
 import ssl
+import time
+import traceback
+import threading
 from email.mime.text import MIMEText
 from typing import Tuple
 
@@ -48,7 +52,7 @@ from sms import SMS
 
 class SMTPDelivery:
     def __init__(
-        self, host: str, port: int, user: str, password: str, health_check_interval: int
+        self, host: str, port: int, user: str, password: str, health_check_interval: int, recipient: str
     ) -> None:
         """
         Create a new SMTPDelivery object.
@@ -60,11 +64,14 @@ class SMTPDelivery:
         @param password: The password for SMTP authentication.
         @param health_check_interval: The interval for the health check in seconds.
         """
+
+        self.queue = queue.Queue()
         self.host = host
         self.port = port
         self.user = user
         self.password = password
         self.server = None
+        self.recipient = recipient
 
         self.last_health_check = datetime.datetime.now()
         self.health_check_interval = health_check_interval
@@ -72,6 +79,9 @@ class SMTPDelivery:
         self.health_logs = None
 
         self.l = logging.getLogger("SMTPDelivery")
+
+        self.thread = threading.Thread(target=self.do)
+        self.thread.start()
 
         if port == 25:
             error_msg = "The client does not support STARTTLS"
@@ -95,6 +105,54 @@ class SMTPDelivery:
         self.l.info(f"Try to log in as {self.user}")
         self.server.login(self.user, self.password)
         self.l.info(f"Log in was successful.")
+
+    def do(self):
+        """
+        Internal method that checks the delivery queue for outgoing SMS that should be sent via SMTP.
+        """
+        while True:
+            try:
+                self.l.debug("Check delivery queue if E-mail should be sent.")
+                _sms = self.queue.get(timeout=10)
+                self.l.info(f"[{_sms.get_id()}] Event in SMS-to-Mail delivery queue.")
+                if _sms:
+                    self.l.info(f"[{_sms.get_id()}] Try to deliver SMS via E-mail.")
+
+                    # Check if the modem config has a specific recipient
+                    recipient = _sms.get_receiving_modem().get_modem_config().email_address
+                    if recipient is None:
+                        self.l.debug("Failed to look up recipient's e-mail address in modem config.")
+                        # Otherwise read recipient from main configuration
+                        recipient = self.recipient
+
+                    self.l.debug(f"Will send e-mail to {recipient}.")
+
+                    if self.send_mail(recipient, _sms):
+                        self.l.info(f"[{_sms.get_id()}] E-mail was accepted by SMTP server.")
+                    else:
+                        self.l.info(f"[{_sms.get_id()}] There was an error delivering the SMS. Put SMS back into "
+                                    "queue and wait.")
+                        self.queue.put(_sms)
+
+                        # Update health data: The loop "prefers" delivering mails and deferrs the
+                        # health check until there is nothing to do. This is okay, because when
+                        # mails are delivered, everything seems to be okay. When there is an
+                        # issue and we have to wait anyway, we can perform a health check to let
+                        # the monitoring sooner or later know.
+                        self.do_health_check()
+                        time.sleep(30)
+
+            except queue.Empty:
+                self.l.debug(
+                    "_do_smtp_delivery(): No SMS in queue. Checking if health check should be run."
+                )
+                self.do_health_check()
+            except Exception as e:
+                self.l.warning("Got exception.")
+                print(e)
+            except:
+                self.l.warning("_do_smtp_delivery(): Unknown exception.")
+                traceback.print_exc()
 
     def get_health_state(self) -> Tuple[str, str]:
         """
