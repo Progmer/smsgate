@@ -19,7 +19,6 @@ class DBDelivery:
         self.thread = threading.Thread(target=self.do)
         self.thread.start()
 
-    def _create_connection(self) -> None:
         self.conn = psycopg2.connect(self.dsn)
 
     def do(self):
