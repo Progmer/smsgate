@@ -55,6 +55,7 @@ import modempool
 import rpcserver
 import smtp
 import db
+import file
 
 
 class SmsGate:
@@ -79,6 +80,7 @@ class SmsGate:
         # initialize sub-modules
         self._init_smtp_delivery()
         self._init_db_delivery()
+        self._init_file_delivery()
         self._init_pool()
         self._init_rpcserver()
 
@@ -140,6 +142,12 @@ class SmsGate:
             return
 
         self.db_delivery = db.DBDelivery(dsn=self.config.get("db", "dsn"))
+
+    def _init_file_delivery(self):
+        if not self.config.getboolean("file", "enabled", fallback=True):
+            return
+
+        self.file_delivery = file.FileDelivery(filepath=self.config.get("file", "file"))
 
     def _init_pool(self) -> bool:
         """
@@ -238,6 +246,12 @@ class SmsGate:
                         assert self.db_delivery.thread.is_alive()
                         self.l.debug(f"[{sms.get_id()}] Put SMS into outgoing DB queue.")
                         self.db_delivery.queue.put(sms)
+
+                    if self.config.getboolean("file", "enabled", fallback=True):
+                        assert self.file_delivery.thread is not None
+                        assert self.file_delivery.thread.is_alive()
+                        self.l.debug(f"[{sms.get_id()}] Put SMS into outgoing File queue.")
+                        self.file_delivery.queue.put(sms)
 
                 else:
                     self.l.info("No incoming SMS")

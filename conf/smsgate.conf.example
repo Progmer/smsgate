@@ -11,6 +11,10 @@ password = secretpass
 recipient = mailbox@example.org
 health_check_interval = 600
 
+[file]
+enabled = False
+file = /path/to/file
+
 [server]
 host = localhost
 port = 7000
