@@ -14,23 +14,24 @@ class FileDelivery:
         self, filepath: str
     ) -> None:
 
+        self.l = logging.getLogger("FileDelivery")
+
         if not os.path.isfile(filepath):
-            logging.critical(
-                f"Configuration file {filepath} is not exists. Stopping here."
+            self.l.critical(
+                f"SMS file {filepath} is not exists. Stopping here."
             )
             sys.exit(1)
 
         st = os.stat(filepath)
         if st.st_mode & stat.S_IWGRP != 16:
-            logging.critical(
-                f"Configuration file {filepath} is not accessible. Stopping here."
+            self.l.critical(
+                f"SMS file {filepath} is not accessible. Stopping here."
             )
             sys.exit(1)
 
         self.queue = queue.Queue()
         self.filepath = filepath
-        self.l = logging.getLogger("FileDelivery")
-
+        self.l.info(f"SMS file is {filepath}")
         self.thread = threading.Thread(target=self.do)
         self.thread.start()
 
