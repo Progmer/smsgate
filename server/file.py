@@ -1,6 +1,9 @@
 import json
+import os
+import sys
 import logging
 import queue
+import stat
 import time
 import traceback
 import threading
@@ -10,6 +13,20 @@ class FileDelivery:
     def __init__(
         self, filepath: str
     ) -> None:
+
+        if not os.path.isfile(filepath):
+            logging.critical(
+                f"Configuration file {filepath} is not exists. Stopping here."
+            )
+            sys.exit(1)
+
+        st = os.stat(filepath)
+        if st.st_mode & stat.S_IWGRP:
+            logging.critical(
+                f"Configuration file {filepath} is not accessible. Stopping here."
+            )
+            sys.exit(1)
+
         self.queue = queue.Queue()
         self.filepath = filepath
         self.l = logging.getLogger("FileDelivery")
@@ -45,7 +62,7 @@ class FileDelivery:
                         time.sleep(30)
             except queue.Empty:
                 self.l.debug(
-                    "db_delivery.do(): No SMS in queue. Checking if health check should be run."
+                    "file_delivery.do(): No SMS in queue. Checking if health check should be run."
                 )
                 self.do_health_check()
 
