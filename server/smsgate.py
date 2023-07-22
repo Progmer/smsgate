@@ -54,6 +54,7 @@ import modemconfig
 import modempool
 import rpcserver
 import smtp
+import db
 
 
 class SmsGate:
@@ -75,6 +76,7 @@ class SmsGate:
 
         # initialize sub-modules
         self._init_smtp_delivery()
+        self._init_db_delivery()
         self._init_pool()
         self._init_rpcserver()
 
@@ -104,6 +106,9 @@ class SmsGate:
         """
         Initializes the XMLRPC server module.
         """
+        if not self.config.getboolean("api", "enabled", fallback=False):
+            return
+
         self.l.info("Init RPC server")
 
         self.server_thread = threading.Thread(
@@ -129,6 +134,12 @@ class SmsGate:
 
         self.smtp_delivery_thread = threading.Thread(target=self._do_smtp_delivery)
         self.smtp_delivery_thread.start()
+
+    def _init_db_delivery(self):
+        if not self.config.getboolean("db", "enabled", fallback=True):
+            return
+
+        self.db = db.DBDelivery(dsn=self.config.get("db", "dsn"))
 
     def _do_smtp_delivery(self):
         """

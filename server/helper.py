@@ -73,6 +73,12 @@ def check_file_permissions(filename: str) -> bool:
     @param filename: The name of the file as string.
     @return: If file is not readable by others, True is returned. Otherwise the program stop with an error message.
     """
+    if not os.path.isfile(filename):
+        logging.critical(
+            f"Configuration file {filename} is not exists. Stopping here."
+        )
+        sys.exit(1)
+
     st = os.stat(filename)
     if st.st_mode & stat.S_IROTH:
         logging.critical(

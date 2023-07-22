@@ -1,3 +1,7 @@
+[db]
+#enabled = True
+dsn = postgres://username:password@dbhost/dbname?sslmode=disable&application_name=smsgate
+
 [mail]
 #enabled = True
 server = mymailserver.example.org
@@ -14,6 +18,8 @@ certificate = cert.pem
 key = key.pem
 
 [api]
+enabled = False
+enable_send_sms = False
 token_send_sms =   $2b$10$Vr3t8gYlc9.OFQspGP7Ez.fR9TLXnBVdZKZKgg77Vuspg16MOel4G
 token_send_ussd =  $2b$10$Vr3t8gYlc9.OFQspGP7Ez.fR9TLXnBVdZKZKgg77Vuspg16MOel4G
 token_get_health_state = $2b$10$yPqkNIyAZuzxLebb/oROiuoFxv2h9AlORWnMO312G8N9.oem0Xnpi
