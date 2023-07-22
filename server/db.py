@@ -4,6 +4,8 @@ import queue
 import time
 import traceback
 import threading
+from typing import Tuple
+
 import psycopg2 as psycopg2
 
 class DBDelivery:
@@ -46,6 +48,12 @@ class DBDelivery:
                         self.queue.put(_sms)
 
                         time.sleep(30)
+            except queue.Empty:
+                self.l.debug(
+                    "db_delivery.do(): No SMS in queue. Checking if health check should be run."
+                )
+                self.do_health_check()
+
             except:
                 self.l.warning("DBDelivery.do(): Unknown exception.")
                 traceback.print_exc()
@@ -59,3 +67,5 @@ class DBDelivery:
         cursor.execute(sql)
         return True
 
+    def do_health_check(self) -> Tuple[str, str]:
+        pass

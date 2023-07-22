@@ -144,7 +144,7 @@ class SMTPDelivery:
 
             except queue.Empty:
                 self.l.debug(
-                    "_do_smtp_delivery(): No SMS in queue. Checking if health check should be run."
+                    "smtp_delivery.do(): No SMS in queue. Checking if health check should be run."
                 )
                 self.do_health_check()
             except Exception as e:
