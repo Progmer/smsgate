@@ -38,7 +38,6 @@ class DBDelivery:
                         'text': _sms.text,
                         'timestamp': _sms.timestamp,
                         'sender': _sms.sender,
-                        'receiving_modem': _sms.receiving_modem,
                     }):
                         self.l.info(f"[{_sms.get_id()}] SMS sended to DB.")
                     else:

@@ -46,14 +46,17 @@ class FileDelivery:
                 if _sms:
                     self.l.info(f"[{_sms.get_id()}] Try to deliver SMS to File.")
 
-                    if self.write({
+                    sms_json = {
                         'sms_id': _sms.get_id,
                         'recipient': _sms.recipient,
                         'text': _sms.text,
                         'timestamp': _sms.timestamp,
                         'sender': _sms.sender,
-                        'receiving_modem': _sms.receiving_modem,
-                    }):
+                    }
+
+                    print(sms_json)
+
+                    if self.write(sms_json):
                         self.l.info(f"[{_sms.get_id()}] SMS sended to File.")
                     else:
                         self.l.info(f"[{_sms.get_id()}] There was an error delivering the SMS. Put SMS back into "
@@ -72,8 +75,8 @@ class FileDelivery:
                 traceback.print_exc()
 
     def write(self, jsonb: dict) -> bool:
-        fp = open(self.filepath, 'w')
-        fp.write(json.dumps(jsonb))
+        fp = open(self.filepath, 'a')
+        fp.write(f'{str(json.dumps(jsonb))}\n')
         return True
 
     def do_health_check(self) -> Tuple[str, str]:
