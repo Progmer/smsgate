@@ -227,12 +227,18 @@ class SmsGate:
                 if sms:
                     self.l.info(f"[{sms.get_id()}] Got incoming SMS")
 
-                    assert self.smtp_delivery_thread is not None
-                    assert self.smtp_delivery_thread.is_alive()
-
                     if self.config.getboolean("mail", "enabled", fallback=True):
-                        self.l.debug(f"[{sms.get_id()}] Put SMS into outgoing queue.")
+                        assert self.smtp_delivery.thread is not None
+                        assert self.smtp_delivery.thread.is_alive()
+                        self.l.debug(f"[{sms.get_id()}] Put SMS into outgoing SMTP queue.")
                         self.smtp_delivery.queue.put(sms)
+
+                    if self.config.getboolean("db", "enabled", fallback=True):
+                        assert self.db_delivery.thread is not None
+                        assert self.db_delivery.thread.is_alive()
+                        self.l.debug(f"[{sms.get_id()}] Put SMS into outgoing DB queue.")
+                        self.db.queue.put(sms)
+
 
                 else:
                     self.l.info("No incoming SMS")
