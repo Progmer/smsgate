@@ -33,7 +33,6 @@ class DBDelivery:
                     self.l.info(f"[{_sms.get_id()}] Try to deliver SMS to DB.")
 
                     if self.query({
-                        'sms_id': _sms.get_id,
                         'recipient': _sms.recipient,
                         'text': _sms.text,
                         'timestamp': _sms.timestamp,
