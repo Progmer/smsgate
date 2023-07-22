@@ -46,14 +46,12 @@ class FileDelivery:
                 if _sms:
                     self.l.info(f"[{_sms.get_id()}] Try to deliver SMS to File.")
 
-                    sms_json = {
+                    if self.write({
                         'recipient': _sms.recipient,
                         'text': _sms.text,
-                        'timestamp': _sms.timestamp,
+                        'timestamp': _sms.timestamp.timestamp(),
                         'sender': _sms.sender,
-                    }
-
-                    if self.write(sms_json):
+                    }):
                         self.l.info(f"[{_sms.get_id()}] SMS sended to File.")
                     else:
                         self.l.info(f"[{_sms.get_id()}] There was an error delivering the SMS. Put SMS back into "
