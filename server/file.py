@@ -21,7 +21,7 @@ class FileDelivery:
             sys.exit(1)
 
         st = os.stat(filepath)
-        if st.st_mode & stat.S_IWGRP:
+        if st.st_mode & stat.S_IWGRP != 16:
             logging.critical(
                 f"Configuration file {filepath} is not accessible. Stopping here."
             )
