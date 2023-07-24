@@ -46,6 +46,8 @@ import sms
 import logging
 import configparser
 import smtp
+import db
+import file
 import modempool
 
 # Our global variable for OpenSSL Cipher settings. It is read from the config
@@ -61,6 +63,8 @@ class RPCServer(xmlrpc.XMLRPC):
             config: configparser.ConfigParser,
             _modempool: modempool.ModemPool,
             smtp_delivery: smtp.SMTPDelivery,
+            db_delivery: db.DBDelivery,
+            file_delivery: file.FileDelivery,
     ) -> None:
         """
         Create a new XMLRPC server interface.
@@ -70,6 +74,8 @@ class RPCServer(xmlrpc.XMLRPC):
         @param config: A configuration object of type ConfigParser.
         @param _modempool: A ModemPool object to interact with.
         @param smtp_delivery: The SMTPDelivery object.
+        @param db_delivery: The DBDelivery object.
+        @param file_delivery: The FileDelivery object.
         """
 
         self.rlevel = "OK"
@@ -321,7 +327,9 @@ class MySSLContext(SSL.Context):
 def set_up_server(
         config: configparser.ConfigParser,
         modempool: modempool.ModemPool,
-        smtp: smtp.SMTPDelivery,
+        smtp_prov: smtp.SMTPDelivery,
+        db_prov: db.DBDelivery,
+        file_prov: file.FileDelivery,
 ) -> None:
     """
     Create a new XMLRPC server.
@@ -330,7 +338,9 @@ def set_up_server(
     such as the SMTPDelivery.
     @param config: A configuration object of type ConfigParser.
     @param modempool: A ModemPool object to interact with.
-    @param smtp: The SMTPDelivery object.
+    @param smtp_prov: The SMTPDelivery object.
+    @param db_prov: The DBDelivery object.
+    @param file_prov: The FileDelivery object.
     """
     global ciphers
 
@@ -357,7 +367,7 @@ def set_up_server(
     )
 
     l.debug("Launching site.")
-    factory = server.Site(RPCServer(config, modempool, smtp))
+    factory = server.Site(RPCServer(config, modempool, smtp_prov, db_prov, file_prov))
     l.debug("Listen for connections.")
     https_server.listen(factory)
     l.debug("Calling run().")

@@ -61,6 +61,7 @@ import file
 class SmsGate:
     smtp_delivery: smtp.SMTPDelivery
     db_delivery: db.DBDelivery
+    file_delivery: file.FileDelivery
 
     """
     Class representing the SMS Gateway
@@ -117,7 +118,7 @@ class SmsGate:
 
         self.server_thread = threading.Thread(
             target=rpcserver.set_up_server,
-            args=(self.config, self.pool, self.smtp_delivery),
+            args=(self.config, self.pool, self.smtp_delivery, self.db_delivery, self.file_delivery),
         )
         self.server_thread.start()
 
