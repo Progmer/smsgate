@@ -59,7 +59,7 @@ class DBDelivery:
         self.conn.autocommit = True
         cursor = self.conn.cursor()
         jsonb['api_call'] = '/parser/sms'
-        sql = '''SELECT ub.api_call(%s)'''.format(json.dumps(jsonb))
+        sql = '''SELECT ub.api_call(\'{query}\'::jsonb)'''.format(query=json.dumps(jsonb))
         self.l.debug('DB Query: ' + sql)
         cursor.execute(sql)
         return True
