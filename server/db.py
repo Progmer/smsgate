@@ -35,7 +35,7 @@ class DBDelivery:
                     if self.query({
                         'recipient': _sms.recipient,
                         'text': _sms.text,
-                        'timestamp': _sms.timestamp,
+                        'timestamp': _sms.timestamp.timestamp(),
                         'sender': _sms.sender,
                     }):
                         self.l.info(f"[{_sms.get_id()}] SMS sended to DB.")
@@ -44,11 +44,11 @@ class DBDelivery:
                                     "queue and wait.")
                         self.queue.put(_sms)
 
-                        time.sleep(30)
+                        time.sleep(5)
             except queue.Empty:
-                self.l.debug(
-                    "db_delivery.do(): No SMS in queue. Checking if health check should be run."
-                )
+                # self.l.debug(
+                #     "db_delivery.do(): No SMS in queue. Checking if health check should be run."
+                # )
                 self.do_health_check()
 
             except:

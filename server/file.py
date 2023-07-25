@@ -60,9 +60,9 @@ class FileDelivery:
 
                         time.sleep(30)
             except queue.Empty:
-                self.l.debug(
-                    "file_delivery.do(): No SMS in queue. Checking if health check should be run."
-                )
+                # self.l.debug(
+                #     "file_delivery.do(): No SMS in queue. Checking if health check should be run."
+                # )
                 self.do_health_check()
 
             except:
