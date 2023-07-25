@@ -59,9 +59,9 @@ import file
 
 
 class SmsGate:
-    smtp_delivery: smtp.SMTPDelivery
-    db_delivery: db.DBDelivery
-    file_delivery: file.FileDelivery
+    smtp_delivery: smtp.SMTPDelivery = False
+    db_delivery: db.DBDelivery = False
+    file_delivery: file.FileDelivery = False
 
     """
     Class representing the SMS Gateway

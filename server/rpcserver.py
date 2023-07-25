@@ -86,6 +86,8 @@ class RPCServer(xmlrpc.XMLRPC):
         self.config = config
         self.pool = _modempool
         self.smtp_delivery = smtp_delivery
+        self.db_delivery = db_delivery
+        self.file_delivery = file_delivery
         xmlrpc.XMLRPC.__init__(self)
 
         # read API token from configuration
