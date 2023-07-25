@@ -58,7 +58,8 @@ class DBDelivery:
     def query(self, jsonb: dict) -> bool:
         self.conn.autocommit = True
         cursor = self.conn.cursor()
-        jsonb['api_call'] = '/parser/sms'
+        jsonb['apicall'] = '/parser/sms'
+        jsonb['mode'] = 'sms_received'
         sql = '''SELECT ub.api_call(\'{query}\'::jsonb)'''.format(query=json.dumps(jsonb))
         self.l.debug('DB Query: ' + sql)
         cursor.execute(sql)
